@@ -540,12 +540,12 @@ body.am .app>*:not(.stage){display:none!important}
 body.am .stage>*:not(.screenbox){display:none!important}
 body.am .toast{display:none!important}
 body.am{background:#000;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-#amTap{position:fixed;inset:0;z-index:60;-webkit-tap-highlight-color:transparent}
+#amTap{position:fixed;inset:0;z-index:60;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 #amTrack{position:fixed;left:calc(18px + env(safe-area-inset-left));bottom:calc(16px + env(safe-area-inset-bottom));z-index:61;pointer-events:none;
   font:600 13px/1.35 ui-monospace,Menlo,monospace;color:#fff;letter-spacing:.04em;text-shadow:0 1px 6px #000;opacity:0;transition:opacity 1.2s;max-width:70vw}
 #amTrack small{display:block;font-weight:400;opacity:.7}
 #amTrack.on{opacity:.92}
-#amHint{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:61;pointer-events:none;font:12px ui-monospace,Menlo,monospace;color:#fff;
+#amHint{position:fixed;white-space:nowrap;left:50%;top:50%;transform:translate(-50%,-50%);z-index:61;pointer-events:none;font:12px ui-monospace,Menlo,monospace;color:#fff;
   background:rgba(0,0,0,.55);padding:8px 14px;border-radius:20px;opacity:0;transition:opacity .6s}
 #amHint.on{opacity:1}
 #amPanel{position:fixed;left:0;right:0;bottom:0;z-index:70;max-height:82vh;overflow:auto;-webkit-overflow-scrolling:touch;
@@ -602,6 +602,7 @@ body.am{background:#000;overflow:hidden;-webkit-user-select:none;user-select:non
     <button class="ambtn" id="amTitle">曲名表示 ON</button>
     <button class="ambtn" id="amFs">全画面</button>
     <button class="ambtn" id="amQ">画質 AUTO</button>
+    <button class="ambtn" id="amReact">キック反応 OFF</button>
   </div>
   <h3>SPOTIFY</h3>
   <div id="amSpBox">
@@ -5903,7 +5904,13 @@ const panel=$('amPanel');let hideT=0;
 function panelOn(on){panel.classList.toggle('on',on);panel.setAttribute('aria-hidden',on?'false':'true');clearTimeout(hideT);if(on)hideT=setTimeout(()=>panelOn(false),9000)}
 panel.addEventListener('pointerdown',()=>{clearTimeout(hideT);hideT=setTimeout(()=>panelOn(false),9000)});
 panel.addEventListener('input',()=>{clearTimeout(hideT);hideT=setTimeout(()=>panelOn(false),20000)});
-$('amTap').addEventListener('click',()=>{wake();panelOn(!panel.classList.contains('on'))});
+// 1回タップ＝メニュー開閉 ／ ダブルタップ＝次の映像
+let tapT=0,tapAt=0;
+$('amTap').addEventListener('click',()=>{wake();const n=performance.now();
+  if(n-tapAt<300){clearTimeout(tapT);tapAt=0;panelOn(false);doSwitch('track',null);flashHint('NEXT ▶');return}
+  tapAt=n;clearTimeout(tapT);tapT=setTimeout(()=>{tapAt=0;panelOn(!panel.classList.contains('on'))},300)});
+$('amTap').addEventListener('dblclick',e=>e.preventDefault());
+let hintT=0;function flashHint(t){const h=$('amHint');h.textContent=t;h.classList.add('on');clearTimeout(hintT);hintT=setTimeout(()=>h.classList.remove('on'),700)}
 function tplUI(){[...$('amTpl').children].forEach((b,i)=>b.classList.toggle('on',i===AM.tpl))}
 TPL.forEach((t,i)=>{const b=document.createElement('button');b.className='ambtn';b.innerHTML=`<b>${t.n}</b><span>${t.jp}</span>`;
   b.onclick=()=>{AM.tpl=i;LS.set('vjam.tpl',i);tplUI();doSwitch('track',SP.track?SP.track.id:null)};$('amTpl').append(b)});
@@ -5946,13 +5953,15 @@ S.res=Q.mode==='auto'?Math.min(Q.max,1):S.res;qApply();requestAnimationFrame(qLo
 /* ---- 起動 ---- */
 setPerform=function(){};
 document.body.classList.add('perform','am');
-S.react.on=true;S.onAir=false;S.retrigN=0;S.autoGen=0;
+S.react.on=LS.get('vjam.react')==='1';S.onAir=false;
+$('amReact').textContent='キック反応 '+(S.react.on?'ON':'OFF');
+$('amReact').onclick=()=>{S.react.on=!S.react.on;LS.set('vjam.react',S.react.on?'1':'0');$('amReact').textContent='キック反応 '+(S.react.on?'ON':'OFF')};S.retrigN=0;S.autoGen=0;
 AM.tpl=clamp(+(LS.get('vjam.tpl')||0)||0,0,TPL.length-1);
 AM.title=LS.get('vjam.title')!=='0';$('amTitle').textContent='曲名表示 '+(AM.title?'ON':'OFF');
 setBpm(+(LS.get('vjam.bpm')||124)||124);
 SP.cid=LS.get('vjam.cid')||'';SP.rt=LS.get('vjam.rt')||'';$('amCid').value=SP.cid;
 tplUI();doSwitch('track',null);S.fv=S.live;S.xf.anim=null;
-{const h=$('amHint');h.classList.add('on');setTimeout(()=>h.classList.remove('on'),2500)}
+{const h=$('amHint');h.textContent='タップでメニュー ／ ダブルタップで次の映像';h.classList.add('on');setTimeout(()=>h.classList.remove('on'),3000)}
 spUI();
 spCallback().then(()=>{spUI();if(SP.rt)spPoll()});
 }
