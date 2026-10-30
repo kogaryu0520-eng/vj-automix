@@ -541,10 +541,20 @@ body.am .stage>*:not(.screenbox){display:none!important}
 body.am .toast{display:none!important}
 body.am{background:#000;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #amTap{position:fixed;inset:0;z-index:60;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
-#amTrack{position:fixed;left:calc(18px + env(safe-area-inset-left));bottom:calc(16px + env(safe-area-inset-bottom));z-index:61;pointer-events:none;
-  font:600 13px/1.35 ui-monospace,Menlo,monospace;color:#fff;letter-spacing:.04em;text-shadow:0 1px 6px #000;opacity:0;transition:opacity 1.2s;max-width:70vw}
-#amTrack small{display:block;font-weight:400;opacity:.7}
-#amTrack.on{opacity:.92}
+#amTrack{position:fixed;left:calc(14px + env(safe-area-inset-left));bottom:calc(14px + env(safe-area-inset-bottom));z-index:61;pointer-events:none;
+  display:flex;align-items:center;gap:12px;max-width:min(78vw,520px);padding:10px 16px 10px 10px;border-radius:14px;
+  background:rgba(0,0,0,.55);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.08);
+  opacity:0;transform:translateY(6px);transition:opacity .35s,transform .35s}
+#amTrack.on{opacity:1;transform:none}
+#amTrack.noart{padding-left:16px}
+#amTrack img{width:64px;height:64px;border-radius:8px;object-fit:cover;flex:none;box-shadow:0 2px 10px rgba(0,0,0,.5)}
+#amTrack .tx{min-width:0;display:flex;flex-direction:column;gap:4px}
+#amTrack b{font:700 17px/1.25 -apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;color:#fff;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+#amTrack span{font:500 13px/1.3 -apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;color:rgba(255,255,255,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(min-width:700px){#amTrack img{width:84px;height:84px}#amTrack b{font-size:21px}#amTrack span{font-size:15px}}
+.amser{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+.amser .ambtn{padding:8px 6px;text-align:center}.amser .ambtn b{font-size:11px}.amser .ambtn span{font-size:10px;margin-top:2px}
+.amlab{font-size:12px;color:#aaa;margin-right:4px}
 #amHint{position:fixed;white-space:nowrap;left:50%;top:50%;transform:translate(-50%,-50%);z-index:61;pointer-events:none;font:12px ui-monospace,Menlo,monospace;color:#fff;
   background:rgba(0,0,0,.55);padding:8px 14px;border-radius:20px;opacity:0;transition:opacity .6s}
 #amHint.on{opacity:1}
@@ -589,10 +599,12 @@ body.am{background:#000;overflow:hidden;-webkit-user-select:none;user-select:non
   <div class="top"><b>VJ AUTO MIX</b><span class="amchip" id="amSpChip">SPOTIFY 未接続</span></div>
   <h3>MIX STYLE</h3>
   <div class="amgrid" id="amTpl"></div>
+  <h3>映像の種類 <span style="letter-spacing:0;color:#666">（複数選択可）</span></h3>
+  <div class="amgrid amser" id="amSer"></div>
   <h3>TEMPO</h3>
   <div class="amrow">
     <button class="ambtn" id="amBpmDn">−</button>
-    <div class="ambpm"><span id="amBpm">124</span><small>BPM</small></div>
+    <div class="ambpm"><span id="amBpm">124</span><small id="amBpmSrc">BPM</small></div>
     <button class="ambtn" id="amBpmUp">+</button>
     <button class="ambtn" id="amTapB">TAP</button>
   </div>
@@ -602,9 +614,11 @@ body.am{background:#000;overflow:hidden;-webkit-user-select:none;user-select:non
     <button class="ambtn" id="amTitle">曲名表示 ON</button>
     <button class="ambtn" id="amFs">全画面</button>
     <button class="ambtn" id="amQ">画質 AUTO</button>
-    <button class="ambtn" id="amReact">キック反応 OFF</button>
+    <button class="ambtn" id="amReact" hidden>音反応 OFF</button>
   </div>
   <h3>SPOTIFY</h3>
+  <div class="amrow" style="margin-bottom:10px"><span class="amlab">曲替わりの切替</span>
+    <button class="ambtn" id="amOffDn">早く</button><div class="ambpm" style="font-size:16px;min-width:60px"><span id="amOff">0.0s</span></div><button class="ambtn" id="amOffUp">遅く</button></div>
   <div id="amSpBox">
     <div class="amrow" style="flex-wrap:nowrap"><input type="text" id="amCid" placeholder="Spotify Client ID" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="ambtn" id="amSpConn">接続</button></div>
     <p class="note" id="amSpNote"></p>
@@ -2980,9 +2994,9 @@ const lerp=(a,b,t)=>a+(b-a)*t;
 const rnd=Math.random;
 
 /* ───────────── templates ───────────── */
-const STYLES=['FLUX','STRUCTURE','READOUT','PANORAMA','ECLIPSE','BARCODE','SCATTER','SEQUENCE','THERMAL','RADIAL','NEBULA','GALAXY','LATTICE','STREAM','SWARM','SHELL','TORUS','RAIN','WAVEFIELD','BURST','CONCRETE','ARCS','INK','RIPPLE','TRANSIT','PAVING','SURFACE','BUBBLES','FOAM','INSET','STRAND','TRUCHET','SPIRO','POLYGON','FACET','SOLID','TERRAIN','TUBE','MOIRE','RINGS','CODE','','','','','','','','','','ATLAS','SURVEY','FAN','ORBIT','COAST','QUADTREE','CELLS','NIGHT','FIELD','SCAN','SCOPE','DOTWAVE','STACK','SUNSET','PASTEL','RIDGE','NEST','NESTGRID','DIAMOND','TWIST','BLOB','GLYPH','GLYPHFORM','MESH','FLARE','ORB','DUNE','CHROME','SMEAR','TYPE'];
+const STYLES=['FLUX','STRUCTURE','READOUT','PANORAMA','ECLIPSE','BARCODE','SCATTER','SEQUENCE','THERMAL','RADIAL','NEBULA','GALAXY','LATTICE','STREAM','SWARM','SHELL','TORUS','RAIN','WAVEFIELD','BURST','CONCRETE','ARCS','INK','RIPPLE','TRANSIT','PAVING','SURFACE','BUBBLES','FOAM','INSET','STRAND','TRUCHET','SPIRO','POLYGON','FACET','SOLID','TERRAIN','TUBE','MOIRE','RINGS','CODE','','','','','','','','','','ATLAS','SURVEY','FAN','ORBIT','COAST','QUADTREE','CELLS','NIGHT','FIELD','SCAN','SCOPE','DOTWAVE','STACK','SUNSET','PASTEL','RIDGE','NEST','NESTGRID','DIAMOND','TWIST','BLOB','GLYPH','GLYPHFORM','MESH','FLARE','ORB','DUNE','CHROME','SMEAR','TYPE','LEDWALL','ARCBARS','HEXTUNNEL','HEXCIRCUIT','BEAMS','SCRATCH','LISSAJOUS','VSPHERE','PIXELEYE','DASHRING','ACID','ACIDMIRROR','OILCELL','FIBER','FIBERRING','MEMBRANE','GLOWBLOB','SMOKE','DUSTRING','CAUSTIC'];
 const CODE_STYLE=40;
-const STYLE_JP=['収束する線','3Dデータ構造','数値パネル','星雲パノラマ','天体の満ち欠け','バーコード','点群プロット','塩基配列','熱分布マップ','放射ファイバー','粒子の雲','渦巻銀河','格子点と座標軸','粒子の流れ','群れ','球殻','トーラス','落ちる粒子','粒子の波面','爆発の波','壁と白い弧','弧と反射','白黒の液体','液体の波紋','夜の移動','石畳','水面','水中の泡','雲と泡','小窓','伸び続ける線','伸び続ける迷路','描き続ける曲線','多角形の無限ズーム','ローポリの面','3D多面体','ワイヤー地形','ワイヤートンネル','メッシュのモアレ','同心円の干渉','p5.js コード','','','','','','','','','','衛星写真の断片','三角測量の線','収束する線の束','円と補助線','海岸線と集落','四分木グリッド','光るセル','夜の街明かり','昼の農地と道','セルに地図が出る','重なる波形','点でできた波','編まれた波の段','夕焼けと波','パステルと波','稜線の重なり','回る入れ子の四角','四角のタイル','菱形の入れ子','ねじれる四角','つやのある球体','文字のモザイク','文字でできた形','ワイヤーのチューブ','横に伸びる光','山の上の光球','夕暮れの草原','液体クローム','横に流れるノイズ','大きな文字の組版'];
+const STYLE_JP=['収束する線','3Dデータ構造','数値パネル','星雲パノラマ','天体の満ち欠け','バーコード','点群プロット','塩基配列','熱分布マップ','放射ファイバー','粒子の雲','渦巻銀河','格子点と座標軸','粒子の流れ','群れ','球殻','トーラス','落ちる粒子','粒子の波面','爆発の波','壁と白い弧','弧と反射','白黒の液体','液体の波紋','夜の移動','石畳','水面','水中の泡','雲と泡','小窓','伸び続ける線','伸び続ける迷路','描き続ける曲線','多角形の無限ズーム','ローポリの面','3D多面体','ワイヤー地形','ワイヤートンネル','メッシュのモアレ','同心円の干渉','p5.js コード','','','','','','','','','','衛星写真の断片','三角測量の線','収束する線の束','円と補助線','海岸線と集落','四分木グリッド','光るセル','夜の街明かり','昼の農地と道','セルに地図が出る','重なる波形','点でできた波','編まれた波の段','夕焼けと波','パステルと波','稜線の重なり','回る入れ子の四角','四角のタイル','菱形の入れ子','ねじれる四角','つやのある球体','文字のモザイク','文字でできた形','ワイヤーのチューブ','横に伸びる光','山の上の光球','夕暮れの草原','液体クローム','横に流れるノイズ','大きな文字の組版','カーブしたLEDの壁','弧を描く光のバー','六角形のトンネル','六角タイルと回路','縦の光線とちり','フィルムの傷と光漏れ','オシロのリサージュ','ベクターの球と軌道','ピクセルの目','破線のリング','液体アシッド','鏡合わせの液体','油の泡','繊維の殻','繊維のリング','膜と等高線','光る塊','ぼやけた光の煙','散る粒子のリング','水底の光の網'];
 const MOTIONS=['SLOW','PULSE','ROTATE','ZOOM','FLOW','GLITCH'];
 const CAMS=['STATIC','FLY','MACRO','WIDE','TUNNEL'];
 const STYLE_P={'FLUX':'monochrome data art, hundreds of thin white lines converging to a vanishing point, binary data blocks streaming along the lines, LED wall',
@@ -3055,7 +3069,7 @@ const STYLE_P={'FLUX':'monochrome data art, hundreds of thin white lines converg
 'DUNE':'dusk landscape, layered hills and swaying grass silhouettes against an orange sky',
 'CHROME':'liquid chrome sphere morphing, studio reflections, dark background',
 'SMEAR':'horizontal pixel smear glitch of blue, violet and pink colour fields',
-'TYPE':'large blocky glyph collage on a multi-scale grid, black, white and blue'};
+'TYPE':'large blocky glyph collage on a multi-scale grid, black, white and blue','LEDWALL':'curved LED wall panorama with pixel shapes and floor reflection','ARCBARS':'stacked curved bars of white light scrolling','HEXTUNNEL':'infinite hexagonal wireframe tunnel','HEXCIRCUIT':'nested hexagon tiles over glowing circuit traces','BEAMS':'vertical light beams with dust and film scratches','SCRATCH':'film light leak with flickering scratches','LISSAJOUS':'green phosphor oscilloscope lissajous figure','VSPHERE':'green vector sphere with orbit ellipses','PIXELEYE':'big pixel mosaic of an eye','DASHRING':'barcode ring of radial dashes','ACID':'psychedelic liquid acid flow','ACIDMIRROR':'mirrored kaleidoscopic liquid','OILCELL':'oil bubbles with bright rims','FIBER':'shell made of glowing hair-like fibres','FIBERRING':'ring and cylinder of glowing fibres','MEMBRANE':'blob membrane with topographic mesh','GLOWBLOB':'soft glowing blob with dithered edge','SMOKE':'blurred drifting light shapes','DUSTRING':'particles drifting off a ring','CAUSTIC':'caustic light network on a pool floor'};
 const MOTION_P={SLOW:'slow drifting motion',PULSE:'rhythmic pulsation synced to the beat',ROTATE:'continuous rotation',ZOOM:'infinite zoom',FLOW:'smooth fluid flow',GLITCH:'digital glitch bursts, datamosh'};
 const CAM_P={STATIC:'locked-off static camera',FLY:'low fly-through camera over the surface',MACRO:'extreme macro close-up, shallow depth of field',WIDE:'ultra wide view',TUNNEL:'infinite tunnel movement'};
 const SUFFIX='seamless loop, VJ visual, high contrast, crisp sharp detail, high resolution, dark background, 16:9, no text, no watermark';
@@ -3123,7 +3137,7 @@ function randomGenome(sel){
   };
 }
 function hueLerp(a,b,t){let d=((b-a)%1+1.5)%1-.5;return ((a+d*t)%1+1)%1}
-function seriesOf(s){return s>=70?70:s>=60?60:s>=50?50:s>=40?40:s>=30?30:(s>=20?20:(s>=10?10:0))}
+function seriesOf(s){return s>=90?90:s>=80?80:s>=70?70:s>=60?60:s>=50?50:s>=40?40:s>=30?30:(s>=20?20:(s>=10?10:0))}
 function mutate(base,opt={}){
   const k=S.keep, w=opt.w!=null?opt.w:(S.mut>=.995?1:Math.pow(S.mut,1.25));
   const sel=S.sel;
@@ -3809,6 +3823,203 @@ vec3 filmStyle(vec2 q,vec2 fc,float fs,float c,float th,float K,float b,vec4 sd)
  col+=grainF(fc,floor(c*max(1.,floor(24.*uL+.5))))*.07;
  return clamp(col,0.,1.);
 }
+// ---- STAGE series (80-89): LED walls, light bars, hex tunnels, beams, phosphor vectors — loop-exact
+float hexA(vec2 p){p=abs(p);return max(p.x,dot(p,vec2(.5,.8660254)));}
+vec4 hexCell(vec2 p){vec2 s=vec2(1.,1.7320508);vec2 a=mod(p,s)-s*.5;vec2 b2=mod(p-s*.5,s)-s*.5;vec2 g=dot(a,a)<dot(b2,b2)?a:b2;return vec4(g,p-g);}
+float ellD(vec2 p,vec2 e){e=max(e,vec2(1e-3));vec2 xe=p/e;float l=max(length(xe),1e-4);vec2 gr=xe/e/l;return abs(l-1.)/max(length(gr),1e-4);}
+vec2 ljP(float t,float fa,float fb,float ph,float tw,float A){vec3 v=vec3(A*sin(fa*t+ph),A*sin(fb*t),A*cos(fa*t+ph));v.xz=rot(tw)*v.xz;return v.xy;}
+vec3 phos(float d,float w){return vec3(.32,1.,.42)*(LN(d,PX*w)+.38*exp(-d*75.)+.12*exp(-d*16.));}
+vec3 stageStyle(vec2 p,vec2 q,float ss,vec2 fc,float c,float th,float K,float b,vec4 sd){
+ vec3 W=vec3(.93);float m=max(1.,K);vec3 col=vec3(0.);vec3 tint=mix(W,uAcc,.22);float ph=th*m;
+ if(ss<.5){ // LEDWALL — curved LED panorama, pixel shapes, floor reflection
+  float u=q.x,v=q.y-.16*q.x*q.x+.04,H=.24;
+  float inb=step(abs(v),H),refl=step(v,-H)*step(-H-.3,v);
+  float vv=inb>.5?v:(-2.*H-v);
+  float cs=.034-.014*KK.y;vec2 cell=floor(vec2(u,vv)/cs);vec2 cc=(cell+.5)*cs;
+  vec2 e=cc;e.x*=.55+.25*sin(ph);
+  float eye=abs(length(e/vec2(1.,.55))-(.17+.05*sin(ph*2.)));
+  float dia=abs(abs(e.x)*.6+abs(e.y)-(.14+.04*cos(ph)));
+  float lit=step(KK.x<.5?eye:dia,.035+.02*KK.z);
+  float scan=step(.55,fract(cc.y*6.-c*m*3.))*step(.6,h21(vec2(cell.y,floor(c*m*8.)+floor(sd.x*50.))));
+  if(KK.w>.55)lit=max(lit,scan);
+  lit=mix(lit,1.-lit,step(.5,KK.z)*step(.3,abs(sin(ph*.5))));
+  vec2 f=fract(vec2(u,vv)/cs)-.5;float pix=1.-smoothstep(.36,.44,max(abs(f.x),abs(f.y)));
+  float val=lit*pix*(.85+.15*h21(cell+floor(c*m*20.)));
+  col=tint*val*(inb+refl*.14*(1.-(-H-v)/.3));
+  col+=vec3(.025,.025,.03)*inb+W*.3*LN(abs(abs(v)-H),PX*.7)*inb;
+  col*=smoothstep(1.5,.9,abs(u));
+ }else if(ss<1.5){ // ARCBARS — stacked curved bars of light scrolling sideways
+  float N=7.+floor(KK.x*6.);
+  for(int i=0;i<13;i++){float fi=float(i);if(fi>=N)break;
+   float k=fi/(N-1.)-.5;float y=k*.8+(.12+.25*KK.y)*2.*k*q.x*q.x;
+   float w=.003+.016*h21(vec2(fi,sd.x*9.));float d=abs(q.y-y);
+   if(d>w+.06)continue;
+   float P=48.,dir=h21(vec2(fi,5.))<.5?-1.:1.;
+   float xi=q.x*8.+dir*c*m*P*(1.+floor(h21(vec2(fi,7.))*2.));
+   float seg=step(.35+.4*KK.z,h21(vec2(mod(floor(xi),P),fi+floor(sd.y*40.))));
+   float fx=fract(xi),edge=smoothstep(0.,.06,fx)*smoothstep(1.,.94,fx);
+   float br=.45+.55*h21(vec2(fi,11.));
+   col+=tint*br*seg*((1.-smoothstep(w,w+PX*1.5,d))*edge+.22*exp(-d*80.));
+   col+=W*.1*LN(d,PX*.5)*(1.-seg);
+  }
+  col*=smoothstep(1.5,.7,abs(q.x));
+ }else if(ss<2.5){ // HEXTUNNEL — infinite hexagonal wireframe tunnel
+  vec2 v=rot(.15*sin(th))*q;float hr=hexA(v)+1e-4;float z=log(hr),F=2.4+1.6*KK.x;
+  float u=z*F-c*m*2.;float ring=LN(abs(fract(u)-.5)/F*hr,PX*.9);
+  float thick=step(mod(floor(u),3.),.5);
+  float ang=atan(v.y,v.x),S=6.*(2.+floor(KK.y*3.));
+  float spoke=LN(abs(fract(ang/TAU*S+.5)-.5)*TAU/S*hr,PX*.6);
+  float corner=LN(abs(fract((ang-.5235988)/TAU*6.+.5)-.5)*TAU/6.*hr,PX*1.1);
+  float dbl=step(.5,KK.z)*LN(abs(fract(u+.5)-.5)/F*hr,PX*.5)*.45;
+  col=W*clamp(ring*(.65+.35*thick)+dbl+spoke*.45+corner,0.,1.)*smoothstep(.0,.06,hr)*(.25+.75*smoothstep(.02,.45,hr));
+ }else if(ss<3.5){ // HEXCIRCUIT — nested hex tiles over circuit traces
+  float sc=2.+2.*KK.x;vec4 hc=hexCell(q*sc);vec2 id=hc.zw;float hd=hexA(hc.xy);
+  float N=3.+floor(KK.y*3.);
+  float ln=LN(abs(fract(hd*2.*N-c*m*2.+floor(h21(id)*4.)*.25)-.5)/(2.*N*sc),PX*.8)*step(hd,.47);
+  float edge=LN(abs(hd-.5)/sc,PX*1.3);
+  vec3 lc=mix(uAcc,uC2*1.3,step(.5,h21(id+3.)));lc=mix(lc,W,.15);
+  vec2 cg=q*22.;vec2 ci=floor(cg),cf=fract(cg)-.5;float hh=h21(ci+floor(sd.z*30.));
+  float tr=hh<.3?LN(abs(cf.y)/22.,PX*.6):(hh<.55?LN(abs(cf.x)/22.,PX*.6):0.);
+  tr=max(tr,step(.93,hh)*(1.-smoothstep(.14,.22,length(cf))));
+  float pulse=.25+.75*step(.85,fract(ci.x*.13+ci.y*.07-c*m*3.));
+  col=uC1*.9*tr*pulse*.55+lc*(ln*.9+edge*.8);
+ }else if(ss<4.5){ // BEAMS — vertical light beams, dust, scratches
+  vec3 bc=mix(vec3(.5,.55,.92),uAcc,.25);float v=0.;
+  for(int i=0;i<7;i++){float fi=float(i),hx=h21(vec2(fi,sd.x*13.));
+   float cx=(hx-.5)*1.2+.08*sin(ph*(1.+floor(hx*2.))+fi);float w=.004+.07*pow(h21(vec2(fi,3.)),2.);
+   v+=exp(-pow((q.x-cx)/w,2.))*(.6+.4*sin(ph*(2.+fi)+fi*1.7))*(.25+.75*h21(vec2(fi,8.)));}
+  v*=.75+.25*noise(vec2(q.x*3.,q.y*2.+2.*sin(th)));
+  vec2 dq=q*90.;float dust=step(.9985,h21(floor(dq)+floor(c*uL*12.)))*(1.-smoothstep(.1,.45,length(fract(dq)-.5)));
+  vec2 sq=rot(.6)*q*vec2(6.,40.);vec2 si=floor(sq),sf=fract(sq)-.5;
+  float scr=step(.985,h21(si+floor(c*uL*8.)*3.1))*LN(abs(sf.y)/40.,PX*.6)*step(abs(sf.x),.4);
+  col=bc*v*.9+W*(dust*.8+scr*.6)*(.3+v)+vec3(.01,.012,.02)+grainF(fc,floor(c*uL*24.))*.04;
+ }else if(ss<5.5){ // SCRATCH — film light leak with flickering scratches
+  float fl=floor(c*uL*12.);
+  float beam=exp(-pow((q.x-.05*sin(th))/(.03+.05*KK.x),2.))*(.8+.2*h21(vec2(fl,1.)));
+  float leak=exp(-pow(q.x+.3*sin(ph+1.),2.)*8.)*.25*(.5+.5*sin(ph*3.));
+  float lines=0.;
+  for(int i=0;i<10;i++){float fi=float(i);float x0=(h21(vec2(fi,fl*.37+sd.y))-.5)*1.6;
+   lines+=step(.45,h21(vec2(fl,fi+4.)))*LN(abs(q.x-x0-.002*sin(q.y*20.+fi)),PX*(.4+h21(vec2(fi,fl))*1.2))*(.3+.7*h21(vec2(fi,fl+9.)));}
+  vec3 bc=mix(vec3(.8,.85,1.),uAcc,.2);
+  col=(bc*(beam*.8+leak)*(.85+.15*h21(vec2(fl,3.)))+W*lines*.5)*smoothstep(1.2,.3,length(q*vec2(.8,1.)))+grainF(fc,fl)*.06;
+ }else if(ss<6.5){ // LISSAJOUS — green phosphor vector scope
+  float d=1e3;
+  if(KK.z<.35){
+   float k=6.+floor(KK.x*8.),amp=.22+.08*sin(th),env=smoothstep(.62,.3,abs(q.x));
+   float y=amp*env*sin(k*q.x-ph*2.),dy=amp*env*k*cos(k*q.x-ph*2.);d=abs(q.y-y)/sqrt(1.+dy*dy);
+  }else if(max(abs(q.x),abs(q.y))<.6){
+   float fa=1.+floor(KK.x*4.),fb=fa+1.+floor(KK.y*3.);vec2 pr=ljP(0.,fa,fb,ph,th,.42);
+   for(int i=1;i<=100;i++){vec2 pt=ljP(float(i)/100.*TAU,fa,fb,ph,th,.42);d=min(d,sdSeg(q,pr,pt));pr=pt;}
+  }
+  col=phos(d,1.1);col=mix(col,col.g*mix(W,uAcc,.6),step(.8,KK.w)*.5);
+ }else if(ss<7.5){ // VSPHERE — vector sphere of latitude lines with orbits
+  float R=.3,tilt=.35+.25*sin(th),d=1e3;
+  for(int i=1;i<12;i++){float la=(float(i)/12.-.5)*3.14159;float r=R*cos(la);
+   d=min(d,ellD(q-vec2(0.,R*sin(la)*cos(tilt)),vec2(r,r*sin(tilt)+1e-3)));}
+  for(int i=0;i<6;i++){float lo=float(i)/6.*3.14159+ph*.5;d=min(d,ellD(q,vec2(abs(R*cos(lo))+1e-3,R)));}
+  for(int i=0;i<2;i++){float fi=float(i);vec2 v=rot(.4+fi*1.2+.2*sin(th+fi))*q;float rx=R*(1.55+.35*fi+.2*KK.x);d=min(d,ellD(v,vec2(rx,rx*(.18+.1*KK.y))));}
+  col=phos(d,.9)*.9;col+=vec3(.32,1.,.42)*exp(-length(q)*40.)*.8;
+  col=mix(col,col.g*mix(W,uAcc,.6),step(.8,KK.w)*.5);
+ }else if(ss<8.5){ // PIXELEYE — big pixel mosaic of an eye / diamond
+  float N=40.+floor(KK.x*40.);vec2 g=q*N,ci=floor(g)+.5,cc=ci/N,f=fract(g)-.5;
+  vec2 e=rot(.3*sin(ph))*cc;e.x/=.9+.3*sin(ph*2.);
+  float sh=KK.y<.5?step(length(e/vec2(1.,.5)),.36)*step(.1+.03*sin(ph*3.),length(e)):step(abs(abs(e.x)+abs(e.y)*1.8-.3),.045+.02*sin(ph));
+  float val=KK.z<.5?sh:sh*step(.5,fract(cc.y*8.-c*m*4.))+(1.-sh)*step(.94,h21(ci+floor(c*m*24.)))*.5;
+  float band=step(abs(q.y),.42);val=mix(val,1.-val,step(.5,KK.w)*band);
+  col=mix(W,uAcc,.15)*val*band*(1.-smoothstep(.38,.46,max(abs(f.x),abs(f.y))));
+ }else{ // DASHRING — barcode ring of radial dashes
+  float r=length(q),a=atan(q.y,q.x),R=.3+.05*KK.x,S=8.*floor(15.+KK.y*15.);
+  float dir=KK.z<.5?1.:-1.;float aa=fract(a/TAU+.5+dir*c*m*.25)*S;float ai=floor(aa),fa=fract(aa)-.5;
+  float hl=h21(vec2(ai,floor(sd.x*30.)));float len=.02+.09*hl*hl*(.6+.4*sin(ph*2.+ai*.3));
+  float rad=smoothstep(R-len*.3-PX,R-len*.3,r)*(1.-smoothstep(R+len,R+len+PX,r));
+  float ang=1.-smoothstep(.22,.32,abs(fa));
+  col=W*rad*ang*step(.25,hl)*(.5+.5*h21(vec2(ai,3.)));
+  float a2=fract(a/TAU+.5-dir*c*m*.25)*S*.5;float h2=h21(vec2(floor(a2),7.+floor(sd.y*9.)));
+  col+=W*.55*step(.7,h2)*(1.-smoothstep(.2,.3,abs(fract(a2)-.5)))*LN(abs(r-R*1.35),PX*2.);
+  col+=W*.35*LN(abs(r-R*.82),PX*.5);
+ }
+ return col;}
+// ---- FLOW series (90-99): liquid acid, oil cells, fibres, membranes, glow, caustics — loop-exact
+float fbmC(vec2 p,vec2 o){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*noise(p+o);p=p*2.03+vec2(1.7,9.2);a*=.5;}return v;}
+float fibre(vec2 uv,vec2 per,vec2 sh){float s=noiseT(uv+sh,per);return pow(clamp(1.-abs(s-.5)*13.,0.,1.),2.);}
+vec3 flowStyle(vec2 p,vec2 q,float fs,vec2 fc,float c,float th,float K,float b,vec4 sd){
+ vec3 W=vec3(.93);float m=max(1.,K);vec3 col=vec3(0.);float ph=th*m;vec2 o=vec2(cos(ph),sin(ph));
+ if(fs<1.5){ // ACID / ACIDMIRROR — domain-warped liquid
+  vec2 z=q*(1.3+KK.x);
+  if(fs>.5){z=rot(.15*sin(th))*z;z=abs(z);z=rot(.785398)*z;z=abs(z);}
+  vec2 w1=vec2(fbmC(z+o*.9,o*.45),fbmC(z+vec2(5.2,1.3)-o*.9,o*.9));
+  float n=fbmC(z+2.2*w1+sd.xy*10.,o*.6),t=n*2.2+length(w1)*.6;
+  vec3 cA=uAcc,cB=uC2*1.25,cC=uAcc.gbr;
+  vec3 cc=mix(cA,cB,smoothstep(.25,.75,fract(t)));
+  cc=mix(cc,cC,smoothstep(.55,.9,fract(t*.5+.3))*.8);
+  cc=mix(cc,vec3(.02),smoothstep(.78,.96,fract(t*1.7+.2))*.85);
+  float bub=fbmC(z*3.+w1*2.,-o);
+  cc=mix(cc,vec3(.02),smoothstep(.6,.64,bub))+W*.35*(smoothstep(.57,.6,bub)-smoothstep(.6,.63,bub));
+  col=cc*(.75+.35*n);
+ }else if(fs<2.5){ // OILCELL — warped bubbles with bright rims
+  vec2 z=q*(3.+3.*KK.x);z+=.6*vec2(fbmC(z*.5+o,o),fbmC(z*.5-o,-o));
+  vec2 zi=floor(z),zf=fract(z);float d1=8.,d2=8.;
+  for(int j=-1;j<=1;j++)for(int i=-1;i<=1;i++){vec2 g=vec2(float(i),float(j));vec2 o2=h22(zi+g);o2=.5+.4*sin(ph+TAU*o2);vec2 r=g+o2-zf;float d=dot(r,r);
+   if(d<d1){d2=d1;d1=d;}else if(d<d2)d2=d;}
+  float edge=sqrt(d2)-sqrt(d1);
+  vec3 base=mix(uAcc,uAcc.gbr,fbmC(q*1.5+o,o));
+  col=base*(.2+.8*smoothstep(.0,.6,sqrt(d1)))*.9+W*.4*(1.-smoothstep(.0,.07,edge));
+ }else if(fs<3.5){ // FIBER — a shell made of glowing hair-like strands
+  vec2 e=rot(.25*sin(th))*(q-vec2(0.,.03));e/=vec2(1.,.5+.18*sin(th));
+  float r=length(e),a=fract(atan(e.y,e.x)/TAU+.5);
+  float mask=smoothstep(.1,.28,r)*smoothstep(.46,.36,r);float rim=exp(-pow((r-.4)/.018,2.));
+  float P=96.,Q=8.;
+  float f1=fibre(vec2(a*P,r*6.),vec2(P,Q),vec2(c*m*3.,-c*m*Q));
+  float f2=fibre(vec2(a*P*1.5+17.,r*9.),vec2(P*1.5,Q),vec2(-c*m*3.,-c*m*Q));
+  vec3 tc=mix(W,vec3(.72,.82,1.),.35);
+  col=tc*((f1+f2*.7)*(mask+rim)*1.1+mask*.06+rim*.5);
+ }else if(fs<4.5){ // FIBERRING — ring + cylinder of strands
+  float R=.32,ry=.11+.05*sin(th),yt=.12,yb=-.2;float u=q.x/R,us=sqrt(max(1.-u*u,0.));
+  vec3 tc=mix(W,vec3(.72,.82,1.),.35);float P=80.,Q=8.;
+  float side=step(abs(u),1.)*step(yb-ry*us,q.y)*step(q.y,yt-ry*us);
+  float ax=(asin(clamp(u,-1.,1.))/3.14159+.5)*P*.5;
+  float fs1=fibre(vec2(ax,q.y*8.),vec2(P*.5,1e4),vec2(.6*sin(ph),.5*sin(ph+1.)));
+  float fsd=fibre(vec2(ax+5.,q.y*5.),vec2(P*.5,1e4),vec2(.6*cos(ph),.4*sin(ph)));
+  col=tc*side*(max(fs1,fsd)*.8+.04);
+  for(int k=0;k<2;k++){float yc=k==0?yt:yb;vec2 e=(q-vec2(0.,yc))/vec2(R,ry);float r=length(e),a=fract(atan(e.y,e.x)/TAU+.5);
+   float msk=smoothstep(.75,.95,r)*smoothstep(1.22,1.02,r);
+   col+=tc*msk*(fibre(vec2(a*P,r*5.),vec2(P,Q),vec2(c*m*4.*(k==0?1.:-1.),-c*m*Q))*1.1+.05);}
+ }else if(fs<5.5){ // MEMBRANE — blob outline with topographic mesh inside
+  float r=length(q),a=atan(q.y,q.x);vec2 dir=vec2(cos(a),sin(a));
+  float R=.3*(1.+.44*(fbmC(dir*1.3+o*.6,o*.3)-.5));
+  float inside=1.-smoothstep(R-PX,R+PX,r);
+  float fld=fbmC(q*3.+o,o*.5);
+  float lines=1.-smoothstep(.03,.08,abs(fract(fld*12.)-.5));
+  float edge=LN(abs(r-R),PX*1.2)+.5*exp(-abs(r-R)*60.);
+  col=W*(inside*lines*(.25+.75*smoothstep(R*.2,R,r))*.8+edge*.9+inside*step(.97,h21(floor(q*200.)+floor(c*uL*10.)))*.6);
+ }else if(fs<6.5){ // GLOWBLOB — soft glowing blob with dithered edge
+  vec2 ctr=.1*vec2(sin(ph),cos(ph*2.));vec2 v=q-ctr;float r=length(v),a=atan(v.y,v.x);
+  float R=.22*(1.+.5*(fbmC(vec2(cos(a),sin(a))*1.6+o*.5,o*.4)-.5));float d=r-R;
+  float n=h21(floor(fc*.5)+floor(c*uL*12.));
+  col=W*((1.-smoothstep(-.08,.02,d))*.9+exp(-max(d,0.)*12.)*.2)*(.8+.2*n);
+  col=max(col,W*step(n,1.-smoothstep(-.04,.06,d))*.75);
+ }else if(fs<7.5){ // SMOKE — blurred drifting light shapes
+  float v=0.;
+  for(int i=0;i<6;i++){float fi=float(i),h=h21(vec2(fi,sd.x*7.));vec2 ctr=.35*vec2(sin(ph*(1.+floor(h*2.))+fi*1.3),.7*sin(ph+fi*2.1));
+   vec2 d=rot(fi)*(q-ctr);d.x*=.4+h*.8;v+=exp(-dot(d,d)*(18.+30.*h))*(.4+.6*h);}
+  v*=.8+.4*fbmC(q*2.+o,o);
+  col=mix(W,uAcc,.15)*smoothstep(0.,1.2,v)*1.1+grainF(fc,floor(c*uL*12.))*.05;
+ }else if(fs<8.5){ // DUSTRING — particles drifting off a ring
+  float r=length(q),a=atan(q.y,q.x),S=180.;float aa=(a/TAU+.5)*S;float ai=floor(aa),af=fract(aa)-.5;float v=0.;
+  for(int k=0;k<3;k++){float fk=float(k),h=h21(vec2(ai,fk+floor(sd.x*20.)));
+   float life=fract(h*7.+c*m*(1.+floor(h*2.)));float pr=.28+life*life*.35*(.3+h);
+   float pa=af+(h21(vec2(ai,fk+9.))-.5)*.6;vec2 lc=vec2(pa*TAU/S*pr,r-pr);float sz=PX*(1.5+2.5*(1.-life));
+   v+=(1.-smoothstep(sz,sz+PX*1.5,length(lc)))*(1.-life)*1.2;}
+  v+=.7*LN(abs(r-.28),PX*.8)*(.5+.5*sin(a*40.+ph));
+  col=W*v;
+ }else{ // CAUSTIC — light network on a pool floor
+  vec2 pp=q*(4.+3.*KK.x)+sd.xy*TAU-250.,i=pp;float cc=1.,inten=.005;
+  for(int n=0;n<5;n++){float t=ph*(1.+float(n))+float(n)*1.7;i=pp+vec2(cos(t-i.x)+sin(t+i.y),sin(t-i.y)+cos(t+i.x));
+   cc+=1./length(vec2(pp.x/(sin(i.x+t)/inten),pp.y/(cos(i.y+t)/inten)));}
+  cc/=5.;cc=1.17-pow(cc,1.4);float v=clamp(pow(abs(cc),8.),0.,1.);
+  col=mix(uC1*.22+vec3(0.,.02,.04),mix(W,uAcc,.35),v);
+ }
+ return col;}
 vec3 turbo(float x){x=clamp(x,0.,1.);
  vec4 v4=vec4(1.,x,x*x,x*x*x);vec2 v2=v4.zw*v4.z;
  return clamp(vec3(dot(v4,vec4(.13572138,4.61539260,-42.66032258,132.13108234))+dot(v2,vec2(-152.94239396,59.28637943)),
@@ -3855,6 +4066,8 @@ void main(){
  PX*=uDens*(C==2?.55:(C==3?1.7:1.));
  bool camOnly=uCamSrc>.5&&uCamSrc<1.5;
  if(camOnly){}
+ else if(S>=90){col=flowStyle(p,q,float(S-90),fc,c,th,K,b,sd);}
+ else if(S>=80){col=stageStyle(p,q,float(S-80),fc,c,th,K,b,sd);}
  else if(S>=70){col=formStyle(p,q,float(S-70),fc,c,th,K,b,bIdx,sd);}
  else if(S>=60){col=waveStyle(q,float(S-60),fc,c,th,K,b,bIdx,sd);}
  else if(S>=50){col=mapStyle(p,q,float(S-50),fc,c,th,K,b,bIdx,sd);}
@@ -4777,7 +4990,7 @@ function synthLoop(style,seed,L,bpm){
     const wm=2*Math.PI*modK/N;for(let n=0;n<N;n++){const am=1-depth*(.5+.5*Math.cos(wm*n));l[n]+=a*am*x0[n]*6;r[n]+=a*am*x1[n]*6}};
   const sub=(n0,a,f=48,dur=.28)=>blip(n0,dur,f,a,.5,.003);
   const semis=(base,k)=>base*Math.pow(2,k/12);
-  if(style>=70)style=[3,7,7,0,9,3,4,1,5,6][style-70];
+  if(style>=70)style=[3,7,7,0,9,3,4,1,5,6][(style-70)%10];
   else if(style>=60)style=[0,6,4,3,3,4,1,2,8,9][style-60];
   else if(style>=50)style=[3,4,0,9,5,6,7,8,1,2][style-50];
   else if(style>=40)style=0;
@@ -5193,7 +5406,7 @@ function tick(nowMs){
   lkFrame(dt);codeTick();
   if(RO&&S.out){if(S.outDim){const [ow,oh]=S.outDim;if(outCanvas.width!==ow||outCanvas.height!==oh){outCanvas.width=ow;outCanvas.height=oh}}else fit(outCanvas,S.res);
     let aud=null;
-    if(S.snd.mode!=='off'&&S.snd.react&&S.snd.env){const e=envAt(S.snd.env,S.out.lt,S.loop.len);aud={...e,kick:e.beat,hat:e.high,bass:e.low,energy:e.lvl}}
+    if(!S.react.on&&window.__AMCALM){aud=window.__AMCALM}else if(S.snd.mode!=='off'&&S.snd.react&&S.snd.env){const e=envAt(S.snd.env,S.out.lt,S.loop.len);aud={...e,kick:e.beat,hat:e.high,bass:e.low,energy:e.lvl}}
     else if(S.react.on){const G=S.react.gain;aud={low:A.bass*G,mid:A.mid*G,high:A.high*G,lvl:A.energy,beat:S.clock.pulse,kick:clamp(A.kick*G,0,1.5),hat:clamp(A.hat*G,0,1.5),bass:clamp(A.bass*G,0,1.5),energy:clamp(A.energy*G,0,1.5)}}
     const w=S.role==='mix'?xfW(S.fv):S.fv,d0=S.dk[0],d1=S.dk[1];S.dip=S.role==='mix'?xfDip(S.fv):0;
     const sv=S.role==='mix'?compSwap(w<.5?(d0||d1):(d1||d0)):null;
@@ -5731,23 +5944,24 @@ refill();lkBoot();codeBoot();
 const AM={tpl:0,cur:null,bpm:124,title:true,pend:null,lastSwitchBeat:-999,fxOffAt:-1,
   sp:{cid:'',at:'',rt:'',exp:0,track:null,playing:false,pollT:0,backoff:0,err:''}};
 const range=(a,b)=>{const o=[];for(let i=a;i<=b;i++)o.push(i);return o};
-const SER={DATA:range(0,9),PTCL:range(10,19),FILM:range(20,29),LINE:range(30,39),MAP:range(50,59),WAVE:range(60,69),FORM:range(70,79)};
+const SER={DATA:range(0,9),PTCL:range(10,19),FILM:range(20,29),LINE:range(30,39),MAP:range(50,59),WAVE:range(60,69),FORM:range(70,79),STAGE:range(80,89),FLOW:range(90,99)};
+window.__AMCALM={low:.35,mid:.45,high:.25,lvl:.6,beat:0,kick:0,hat:0,bass:.35,energy:.6};
 const GRADE0={hue:0,sat:100,con:100,exp:0,bloom:0,tintAmt:0,tintHue:200,inv:false,mono:false,flash:false};
 /* テンプレート：
    pool=使う映像シリーズ / x=トランジション種類 / xb=トランジションの長さ（拍）
    scene=曲の途中で映像を変える間隔（小節）/ mut=途中変化の大きさ / track=Spotify未接続時に「曲替わり」扱いにする間隔（小節）
    pal=色の決め方 / cam=360°カメラ / grade=色補正 / fx=拍でFXを打つ */
 const TPL=[
- {n:'TECHNO LONG',jp:'モノクロ・長いフェード',pool:[...SER.DATA,...SER.PTCL,...SER.LINE],motions:[0,2,4],x:'fade',xb:32,scene:32,mut:.25,track:64,
-  pal:r=>({hue:r(),sat:r()<.75?0:.9,spread:.05}),cam:{mode:'drift',range:55,speed:60,every:8},grade:{con:115}},
- {n:'HOUSE FILTER',jp:'暖色・溶けるように',pool:[...SER.WAVE,...SER.FORM,...SER.MAP],motions:[1,4,0],x:'dissolve',xb:16,scene:16,mut:.35,track:64,
-  pal:r=>({hue:[.92,.02,.08,.11,.75,.55][Math.floor(r()*6)],sat:.85+r()*.15,spread:[.1,.15,.5][Math.floor(r()*3)]}),cam:{mode:'drift',range:70,speed:90,every:8},grade:{bloom:35}},
- {n:'CUT-IN',jp:'小節頭でスパッと切替',pool:[...SER.DATA,...SER.LINE,...SER.MAP,...SER.WAVE,...SER.FORM],motions:[1,2,3,5],x:'cut',xb:0,scene:8,mut:.95,track:32,
-  pal:r=>({hue:r(),sat:r()<.5?0:1,spread:.1}),cam:{mode:'jump',range:100,speed:100,every:4},grade:{con:125}},
- {n:'GLITCH',jp:'グリッチ＋拍でFX',pool:[...SER.DATA,...SER.LINE,...SER.MAP],motions:[5,1,3],x:'glitch',xb:2,scene:4,mut:.6,track:32,
-  pal:r=>({hue:r(),sat:r()<.4?0:1,spread:.5}),cam:{mode:'jump',range:80,speed:120,every:4},grade:{con:120},fx:true},
- {n:'FILM AMBIENT',jp:'実写の質感・ゆっくり',pool:[...SER.FILM,...SER.FORM.slice(5)],motions:[0,4],x:'fade',xb:64,scene:64,mut:.2,track:96,
-  pal:r=>({hue:r(),sat:r()<.6?0:.5,spread:.08}),cam:{mode:'off',range:50,speed:50,every:8},grade:{}},
+ {n:'TECHNO LONG',jp:'モノクロ・長いフェード',pool:[...SER.DATA,...SER.PTCL,...SER.LINE,80,81,82,84,85,88,89,95,98],motions:[0,2,4],x:'fade',xb:32,scene:32,mut:.25,track:64,
+  pal:r=>({hue:r(),sat:r()<.75?0:.9,spread:.05}),cam:{mode:'drift',range:55,speed:60,every:8},camW:{drift:.45,off:.35,jump:.2},grade:{con:115}},
+ {n:'HOUSE FILTER',jp:'暖色・溶けるように',pool:[...SER.WAVE,...SER.FORM,...SER.MAP,...SER.FLOW,83,86,87],motions:[1,4,0],x:'dissolve',xb:16,scene:16,mut:.35,track:64,
+  pal:r=>({hue:[.92,.02,.08,.11,.75,.55][Math.floor(r()*6)],sat:.85+r()*.15,spread:[.1,.15,.5][Math.floor(r()*3)]}),cam:{mode:'drift',range:70,speed:90,every:8},camW:{drift:.55,off:.3,jump:.15},grade:{bloom:35}},
+ {n:'CUT-IN',jp:'小節頭でスパッと切替',pool:[...SER.DATA,...SER.LINE,...SER.MAP,...SER.WAVE,...SER.FORM,...SER.STAGE],motions:[1,2,3,5],x:'cut',xb:0,scene:8,mut:.95,track:32,
+  pal:r=>({hue:r(),sat:r()<.5?0:1,spread:.1}),cam:{mode:'jump',range:100,speed:100,every:4},camW:{jump:.45,drift:.3,off:.25},grade:{con:125}},
+ {n:'GLITCH',jp:'グリッチ＋拍でFX',pool:[...SER.DATA,...SER.LINE,...SER.MAP,80,83,85,86,88,89],motions:[5,1,3],x:'glitch',xb:2,scene:4,mut:.6,track:32,
+  pal:r=>({hue:r(),sat:r()<.4?0:1,spread:.5}),cam:{mode:'jump',range:80,speed:120,every:4},camW:{jump:.45,drift:.25,off:.3},grade:{con:120},fx:true},
+ {n:'FILM AMBIENT',jp:'実写の質感・ゆっくり',pool:[...SER.FILM,...SER.FORM.slice(5),84,85,93,94,96,97,99],motions:[0,4],x:'fade',xb:64,scene:64,mut:.2,track:96,
+  pal:r=>({hue:r(),sat:r()<.6?0:.5,spread:.08}),cam:{mode:'drift',range:50,speed:50,every:8},camW:{off:.5,drift:.5},grade:{}},
  {n:'RANDOM',jp:'曲ごとにスタイル抽選',random:true},
 ];
 const LS={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
@@ -5762,11 +5976,16 @@ function applyLook(t){
   if(!t.fx){S.fx.active=false;S.fx.hold=false}
 }
 function curT(){return AM.cur||TPL[AM.tpl]}
+/* 映像の種類（元アプリのタブ）。何も選ばない＝AUTO（テンプレートのおすすめ） */
+const SER_JP={DATA:'データ',PTCL:'粒子 3D',FILM:'フィルム',LINE:'ライン',MAP:'地図',WAVE:'波・四角',FORM:'形・光',STAGE:'ステージ光',FLOW:'流体・繊維'};
+AM.series=new Set((LS.get('vjam.series')||'').split(',').filter(n=>SER[n]));
+function poolOf(t){if(!AM.series.size)return t.pool;const p=[];for(const n of AM.series)p.push(...SER[n]);return p}
 
 /* ---- 映像を作る ---- */
 function makeTrackG(t,key){
   const r=prng(key!=null?strHash(String(key)):Math.random());
-  S.sel={style:t.pool[Math.floor(r()*t.pool.length)],motion:t.motions[Math.floor(r()*t.motions.length)],cam:Math.floor(r()*CAMS.length)};
+  const pool=poolOf(t);
+  S.sel={style:pool[Math.floor(r()*pool.length)],motion:t.motions[Math.floor(r()*t.motions.length)],cam:Math.floor(r()*CAMS.length)};
   S.keep={structure:false,style:false,motion:false};
   const g=mutate(null);
   g.seed=[r(),r(),r(),r()];g.k=[r(),r(),r(),r()];
@@ -5775,14 +5994,25 @@ function makeTrackG(t,key){
   return g;
 }
 function makeSceneG(t){
-  const base=S.out;if(!base||!t.pool.includes(base.style))return makeTrackG(t,null);
+  const pool=poolOf(t),base=S.out;if(!base||!pool.includes(base.style))return makeTrackG(t,null);
   S.sel={style:base.style,motion:base.motion,cam:base.cam};
   S.keep={structure:false,style:t.mut<.5,motion:false};
   const g=mutate(base,{w:t.mut});
-  if(!t.pool.includes(g.style)){g.style=base.style;g.prompt=expand(g)}
+  if(!pool.includes(g.style)){g.style=base.style;g.prompt=expand(g)}
   S.keep={structure:false,style:false,motion:false};
   return g;
 }
+
+/* ---- カメラ：回転量は半分、モードは切り替えごとに抽選（デッキごとに保持） ---- */
+const CAM_SCALE=.5;
+function pickCam(t){
+  const w=t.camW||{[t.cam.mode]:1};let x=Math.random()*Object.values(w).reduce((a,b)=>a+b,0),mode='off';
+  for(const [m,v] of Object.entries(w)){if((x-=v)<=0){mode=m;break}}
+  const j=()=>.7+Math.random()*.6;
+  return {mode,range:Math.round(t.cam.range*CAM_SCALE*j()),speed:Math.round(t.cam.speed*j()),every:Math.random()<.5?4:8,roll:Math.random()<.5};
+}
+const baseCamAt=camAt;
+camAt=function(g){const sv=S.cam;if(g&&g.camCfg)S.cam=g.camCfg;try{return baseCamAt(g)}finally{S.cam=sv}};
 
 /* ---- 切り替え（2デッキをトランジション） ---- */
 function doSwitch(kind,key){
@@ -5794,6 +6024,7 @@ function doSwitch(kind,key){
   }
   const g=kind==='track'?makeTrackG(t,key):makeSceneG(t);
   const nxt=1-S.live;
+  g.camCfg=pickCam(t);
   S.dk[nxt]=g;g.lt=0;g.status='local';
   S.live=nxt;
   const d=t.x==='cut'?0:t.xb*60/Math.max(40,S.clock.bpm);
@@ -5829,14 +6060,22 @@ const taps=[];
 function amTap(){const n=performance.now()/1000;if(taps.length&&n-taps[taps.length-1]>2)taps.length=0;taps.push(n);if(taps.length>6)taps.shift();
   if(taps.length>=3)setBpm(60*(taps.length-1)/(taps[taps.length-1]-taps[0]));S.clock.ph=Math.round(S.clock.ph)}
 
-/* ---- 曲名表示 ---- */
-let titleT=0;
+/* ---- 曲名＋カバーアート（常時表示、ON/OFF） ---- */
+let titleT=0,titleKey='';
 function showTitle(tr){
-  const el=$('amTrack');if(!AM.title||!tr){el.classList.remove('on');return}
-  el.innerHTML='';const b=document.createElement('div');b.textContent=tr.name;const s=document.createElement('small');s.textContent=tr.artist;el.append(b,s);
-  el.classList.add('on');clearTimeout(titleT);titleT=setTimeout(()=>el.classList.remove('on'),7000);
+  const el=$('amTrack');
+  if(!AM.title||!tr){el.classList.remove('on');titleKey='';return}
+  const key=tr.id+'|'+tr.name;if(key===titleKey&&el.classList.contains('on'))return;titleKey=key;
+  const fill=()=>{
+    el.innerHTML='';
+    if(tr.art){const im=document.createElement('img');im.src=tr.art;im.alt='';el.append(im)}
+    const tx=document.createElement('div');tx.className='tx';
+    const b=document.createElement('b');b.textContent=tr.name;const s=document.createElement('span');s.textContent=tr.artist;
+    tx.append(b,s);el.append(tx);el.classList.toggle('noart',!tr.art);el.classList.add('on');
+  };
+  clearTimeout(titleT);
+  if(el.classList.contains('on')){el.classList.remove('on');titleT=setTimeout(fill,350)}else fill();
 }
-
 /* ═════════════ Spotify（PKCE・サーバー不要） ═════════════ */
 const SP=AM.sp,REDIR=location.origin+location.pathname;
 const b64u=buf=>btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -5874,29 +6113,59 @@ async function spCallback(){
   try{await spToken({grant_type:'authorization_code',code:q.get('code'),redirect_uri:REDIR,client_id:SP.cid,code_verifier:LS.get('vjam.ver')||''});SP.err=''}
   catch(e){SP.err='ログイン失敗：'+e.message}
 }
-function spSchedule(ms){clearTimeout(SP.pollT);SP.pollT=setTimeout(spPoll,ms)}
+function spSchedule(ms){clearTimeout(SP.pollT);SP.pollT=setTimeout(spPoll,Math.max(200,ms))}
+AM.offset=+(LS.get('vjam.offset')||0)||0;   // 切替タイミングの微調整（ms、＋で遅く）
+const trOf=it=>{if(!it)return null;const im=(it.album&&it.album.images)||(it.images)||[];
+  const art=(im.find(x=>x.width&&x.width<=320)||im[0]||{}).url||'';
+  return {id:it.id||it.uri||it.name,name:it.name||'',artist:(it.artists||[]).map(a=>a.name).join(', ')||(it.show&&it.show.name)||'',art,dur:it.duration_ms||0}};
+async function spGet(path){
+  if(!SP.at||Date.now()>SP.exp)await spRefresh();
+  const r=await fetch('https://api.spotify.com/v1/me/player/'+path,{headers:{Authorization:'Bearer '+SP.at}});
+  if(r.status===401){SP.at='';throw Object.assign(new Error('401'),{retry:500})}
+  if(r.status===429){const ra=+(r.headers.get('Retry-After')||30);throw Object.assign(new Error('Spotify の利用回数制限中（'+ra+'秒待機）'),{retry:ra*1000,show:true})}
+  if(r.status===403){throw Object.assign(new Error('403：Dashboard の User Management にこのSpotifyアカウントを追加してください'),{retry:30000,show:true})}
+  return r.status===200?await r.json().catch(()=>null):null;
+}
+async function spNext(cur){
+  // 次に流れる曲を先に聞いておく（切替の瞬間に、その曲の映像と曲名をすぐ出すため）
+  if(SP.nextFor===cur.id)return;SP.nextFor=cur.id;SP.next=null;
+  try{const q=await spGet('queue');const n=trOf(q&&q.queue&&q.queue[0]);if(n&&n.id!==cur.id){SP.next=n;if(n.art)new Image().src=n.art}}catch(e){}
+}
+function spPredFire(){
+  // 曲の終わりの瞬間：問い合わせを待たずに切り替える
+  if(!SP.playing||!SP.track)return;
+  const nx=SP.next;SP.predFired=performance.now();
+  doSwitch('track',nx?nx.id:null);
+  if(nx){SP.track=nx;showTitle(nx);spUI()}
+  spSchedule(1500);
+}
 async function spPoll(){
   if(!SP.rt)return;
   if(document.hidden){spSchedule(4000);return}
   try{
-    if(!SP.at||Date.now()>SP.exp)await spRefresh();
-    const r=await fetch('https://api.spotify.com/v1/me/player/currently-playing',{headers:{Authorization:'Bearer '+SP.at}});
-    if(r.status===401){SP.at='';spSchedule(500);return}
-    if(r.status===429){const ra=+(r.headers.get('Retry-After')||30);SP.err='Spotify の利用回数制限中（'+ra+'秒待機）';spUI();spSchedule(ra*1000);return}
-    if(r.status===403){SP.err='403：Dashboard の User Management にこのSpotifyアカウントを追加してください';spUI();spSchedule(30000);return}
-    let j=null;if(r.status===200)j=await r.json().catch(()=>null);
-    const it=j&&(j.item||j.track);
+    const t0=performance.now();const j=await spGet('currently-playing');const t1=performance.now(),mid=(t0+t1)/2;
+    const tr=trOf(j&&(j.item||j.track));
     SP.err='';
-    if(!it){SP.playing=false;spUI();spSchedule(5000);return}
-    const tr={id:it.id||it.uri||it.name,name:it.name||'',artist:(it.artists||[]).map(a=>a.name).join(', ')||(it.show&&it.show.name)||''};
+    if(!tr){SP.playing=false;clearTimeout(SP.predT);spUI();spSchedule(4000);return}
     SP.playing=!!j.is_playing;
-    const changed=!SP.track||SP.track.id!==tr.id;SP.track=tr;
-    if(changed){queueSwitch('track',tr.id);showTitle(tr)}
-    spUI();
-    // 曲の終わりが近ければ、その瞬間に合わせて問い合わせる（切り替えの遅れを減らす）
-    const left=(it.duration_ms||0)-(j.progress_ms||0);
-    spSchedule(SP.playing&&left>0&&left<4500?left+350:SP.playing?4000:6000);
-  }catch(e){SP.err='通信エラー：'+e.message;spUI();spSchedule(8000)}
+    const changed=!SP.track||SP.track.id!==tr.id;
+    if(changed){
+      // 予測で切り替えた直後なら、映像はそのまま（二重に切り替えない）
+      if(!(SP.predFired&&mid-SP.predFired<9000))doSwitch('track',tr.id);
+      SP.predFired=0;
+    }
+    SP.track=tr;showTitle(tr);spUI();
+    clearTimeout(SP.predT);
+    const left=tr.dur-(j.progress_ms||0);
+    if(SP.playing&&left>0){
+      if(left<25000)spNext(tr);
+      // 終わる瞬間をこの端末の時計で予約（通信の往復の半分を補正）
+      const at=mid+left+AM.offset-performance.now();
+      if(left<15000&&at>0)SP.predT=setTimeout(spPredFire,at);
+      spSchedule(left<15000?Math.min(2500,Math.max(800,left-2500)):2500);
+      if(left<15000&&left<3300)spSchedule(left+1500);
+    }else spSchedule(SP.playing?2500:5000);
+  }catch(e){if(e.show){SP.err=e.message}else if(e.message!=='401'){SP.err='通信エラー：'+e.message}spUI();spSchedule(e.retry||8000)}
 }
 
 /* ═════════════ UI ═════════════ */
@@ -5906,7 +6175,7 @@ panel.addEventListener('pointerdown',()=>{clearTimeout(hideT);hideT=setTimeout((
 panel.addEventListener('input',()=>{clearTimeout(hideT);hideT=setTimeout(()=>panelOn(false),20000)});
 // 1回タップ＝メニュー開閉 ／ ダブルタップ＝次の映像
 let tapT=0,tapAt=0;
-$('amTap').addEventListener('click',()=>{wake();const n=performance.now();
+$('amTap').addEventListener('click',()=>{wake();if(A.ctx&&A.ctx.state==='suspended')A.ctx.resume();const n=performance.now();
   if(n-tapAt<300){clearTimeout(tapT);tapAt=0;panelOn(false);doSwitch('track',null);flashHint('NEXT ▶');return}
   tapAt=n;clearTimeout(tapT);tapT=setTimeout(()=>{tapAt=0;panelOn(!panel.classList.contains('on'))},300)});
 $('amTap').addEventListener('dblclick',e=>e.preventDefault());
@@ -5916,7 +6185,18 @@ TPL.forEach((t,i)=>{const b=document.createElement('button');b.className='ambtn'
   b.onclick=()=>{AM.tpl=i;LS.set('vjam.tpl',i);tplUI();doSwitch('track',SP.track?SP.track.id:null)};$('amTpl').append(b)});
 $('amBpmDn').onclick=()=>setBpm(AM.bpm-1);$('amBpmUp').onclick=()=>setBpm(AM.bpm+1);$('amTapB').onclick=amTap;
 $('amNext').onclick=()=>doSwitch('track',null);
-$('amTitle').onclick=()=>{AM.title=!AM.title;LS.set('vjam.title',AM.title?'1':'0');$('amTitle').textContent='曲名表示 '+(AM.title?'ON':'OFF');if(!AM.title)showTitle(null)};
+$('amTitle').onclick=()=>{AM.title=!AM.title;LS.set('vjam.title',AM.title?'1':'0');$('amTitle').textContent='曲名表示 '+(AM.title?'ON':'OFF');titleKey='';showTitle(AM.title?SP.track:null)};
+/* 映像の種類 */
+function serUI(){[...$('amSer').children].forEach(b=>b.classList.toggle('on',b.dataset.s==='AUTO'?!AM.series.size:AM.series.has(b.dataset.s)))}
+[['AUTO','おまかせ'],...Object.entries(SER_JP)].forEach(([k,jp])=>{const b=document.createElement('button');b.className='ambtn';b.dataset.s=k;b.innerHTML=`<b>${k}</b><span>${jp}</span>`;
+  b.onclick=()=>{if(k==='AUTO')AM.series.clear();else if(AM.series.has(k))AM.series.delete(k);else AM.series.add(k);
+    LS.set('vjam.series',[...AM.series].join(','));serUI();doSwitch('track',SP.track?SP.track.id:null)};$('amSer').append(b)});
+serUI();
+/* 切替タイミングの微調整 */
+function offUI(){$('amOff').textContent=(AM.offset>0?'+':'')+(AM.offset/1000).toFixed(1)+'s'}
+$('amOffDn').onclick=()=>{AM.offset=clamp(AM.offset-100,-2000,2000);LS.set('vjam.offset',AM.offset);offUI()};
+$('amOffUp').onclick=()=>{AM.offset=clamp(AM.offset+100,-2000,2000);LS.set('vjam.offset',AM.offset);offUI()};
+offUI();
 $('amFs').onclick=()=>{const d=document.documentElement,f=d.requestFullscreen||d.webkitRequestFullscreen;
   if(document.fullscreenElement||document.webkitFullscreenElement){(document.exitFullscreen||document.webkitExitFullscreen).call(document)}
   else if(f){f.call(d).catch?.(()=>{})}else{$('amSpNote').textContent='iPhoneでは「共有 → ホーム画面に追加」から開くと全画面になります'}};
@@ -5928,7 +6208,7 @@ let wl=null;
 async function wake(){try{if('wakeLock' in navigator&&!wl){wl=await navigator.wakeLock.request('screen');wl.addEventListener('release',()=>{wl=null})}}catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){wake();if(SP.rt)spSchedule(200)}});
 
-window.__amState=()=>({tpl:TPL[AM.tpl].n,cur:curT().n,live:S.live,fv:+S.fv.toFixed(2),style:S.out&&STYLES[S.out.style],other:S.dk[1-S.live]&&STYLES[S.dk[1-S.live].style],anim:!!S.xf.anim,bpm:Math.round(S.clock.bpm),beat:S.clock.last,xt:S.xf.type,fx:S.fx.active,cam:S.cam.mode,mono:S.grade.mono});
+window.__amState=()=>({tpl:TPL[AM.tpl].n,cur:curT().n,live:S.live,fv:+S.fv.toFixed(2),style:S.out&&STYLES[S.out.style],other:S.dk[1-S.live]&&STYLES[S.dk[1-S.live].style],anim:!!S.xf.anim,bpm:Math.round(S.clock.bpm),beat:S.clock.last,xt:S.xf.type,fx:S.fx.active,cam:S.out&&S.out.camCfg,mono:S.grade.mono});
 /* ═════════════ 画質：動く範囲でいちばん高く（fps を見て自動調整） ═════════════ */
 const DPR=window.devicePixelRatio||1;
 const Q={mode:LS.get('vjam.q')||'auto',min:.5,max:Math.min(DPR,3)/Math.min(DPR,2),iv:[],last:0,adj:0,good:0};
@@ -5950,15 +6230,30 @@ function qLoop(t){
 $('amQ').onclick=()=>{Q.mode=({auto:'max',max:'std',std:'auto'})[Q.mode];LS.set('vjam.q',Q.mode);Q.iv=[];Q.good=0;if(Q.mode==='auto')S.res=Math.min(Q.max,Math.max(S.res,.8));qApply()};
 S.res=Q.mode==='auto'?Math.min(Q.max,1):S.res;qApply();requestAnimationFrame(qLoop);
 
+window.__amForce=(st)=>{const t=curT();S.sel={style:st,motion:0,cam:0};const g=mutate(null);g.camCfg={mode:'off',range:0,speed:100,every:4,roll:false};const nxt=1-S.live;S.dk[nxt]=g;g.lt=7;S.live=nxt;S.fv=nxt;S.xf.anim=null;return STYLES[st]};
 /* ---- 起動 ---- */
 setPerform=function(){};
 document.body.classList.add('perform','am');
-S.react.on=LS.get('vjam.react')==='1';S.onAir=false;
-$('amReact').textContent='キック反応 '+(S.react.on?'ON':'OFF');
-$('amReact').onclick=()=>{S.react.on=!S.react.on;LS.set('vjam.react',S.react.on?'1':'0');$('amReact').textContent='キック反応 '+(S.react.on?'ON':'OFF')};S.retrigN=0;S.autoGen=0;
+S.onAir=false;
+/* 音反応：OFF／BPM（擬似ビート）／MIC（マイクで実際の音を聞く） */
+AM.snd='off';  // 音反応は使わない（常にOFF）
+const SND_LBL={off:'音反応 OFF',bpm:'音反応 BPM',mic:'音反応 MIC'};
+async function setSnd(m,quiet){
+  if(m==='mic'){
+    try{await useMic()}catch(e){}
+    if(A.src!=='mic'){if(!quiet)flashHint('マイクを使えませんでした（許可を確認）');m='off'}
+    else{A.tapLock=false;A.peak=[.2,.2,.2,.2]}
+  }
+  if(m!=='mic'&&A.src!=='sim'){useSim();setBpm(AM.bpm)}
+  AM.snd=m;S.react.on=m!=='off';LS.set('vjam.snd',m);$('amReact').textContent=SND_LBL[m];
+}
+
+// MIC中はBPMを音から自動で推定して表示
+setInterval(()=>{if(AM.snd==='mic'){const b=Math.round(S.clock.bpm);$('amBpm').textContent=b+(A.tapLock?'':'');$('amBpmSrc').textContent=A.tapLock?'BPM':'AUTO'}else $('amBpmSrc').textContent='BPM'},500);S.retrigN=0;S.autoGen=0;
 AM.tpl=clamp(+(LS.get('vjam.tpl')||0)||0,0,TPL.length-1);
 AM.title=LS.get('vjam.title')!=='0';$('amTitle').textContent='曲名表示 '+(AM.title?'ON':'OFF');
 setBpm(+(LS.get('vjam.bpm')||124)||124);
+setSnd(AM.snd,true);
 SP.cid=LS.get('vjam.cid')||'';SP.rt=LS.get('vjam.rt')||'';$('amCid').value=SP.cid;
 tplUI();doSwitch('track',null);S.fv=S.live;S.xf.anim=null;
 {const h=$('amHint');h.textContent='タップでメニュー ／ ダブルタップで次の映像';h.classList.add('on');setTimeout(()=>h.classList.remove('on'),3000)}
